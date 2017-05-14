@@ -26,14 +26,7 @@ public class NetworkModule {
     @Singleton
     @Provides
     public HttpLoggingInterceptor loggingInterceptor() {
-        return new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                if (BuildConfig.DEBUG) {
-                    Timber.i(message);
-                }
-            }
-        });
+        return new HttpLoggingInterceptor(msg->Timber.i(msg));
     }
 
     @Singleton

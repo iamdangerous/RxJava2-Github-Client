@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.application.testdoctalk.R;
@@ -42,6 +43,9 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
     AppCompatEditText et;
     @BindView(R.id.rv)
     RecyclerView rv;
+    @BindView(R.id.progressBar)
+    ProgressBar progressBar;
+    Observable<List<IssuesResponse>> observable;
 
 
     public SearchFragment() {
@@ -56,11 +60,17 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        initVars();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
         ButterKnife.bind(this, view);
-        init();
+
         setAdapter();
         et.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -77,8 +87,6 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
             }
         });
 
-//        rv.setOnClickListener(v-> System.out.println());
-
         return view;
     }
 
@@ -88,22 +96,26 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
             return;
         }
         String arr[] = query.split("/");
-        if(arr.length!=2){
+        if (arr.length != 2) {
             displayMessage("invalid input");
             return;
         }
 
         String ownerName = arr[0];
         String repoName = arr[1];
-        Map<String,String> map = new HashMap<>();
-        apiInterface.getSearchResult(ownerName,repoName,map)
+        Map<String, String> map = new HashMap<>();
+        observable = apiInterface.getSearchResult(ownerName, repoName, map)
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(observer);
+                .observeOn(AndroidSchedulers.mainThread());
+
+        observable.subscribe(observer);
+        mList.clear();
+        mAdapter.notifyDataSetChanged();
+        progressBar.setVisibility(View.VISIBLE);
     }
 
 
-    private void init() {
+    private void initVars() {
         mList = new ArrayList<>();
     }
 
@@ -111,11 +123,6 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
         mAdapter = new SearchAdapter(getContext(), mList, this);
         rv.setLayoutManager(new LinearLayoutManager(getActivity()));
         rv.setAdapter(mAdapter);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
     }
 
     @Override
@@ -134,17 +141,21 @@ public class SearchFragment extends BaseFragment implements SearchAdapter.ISearc
             Timber.d("onNext");
             mList.clear();
             mList.addAll(issuesResponses);
-            mAdapter.notifyItemRangeInserted(0,mList.size());
+            mAdapter.notifyItemRangeInserted(0, mList.size());
         }
 
         @Override
         public void onError(Throwable e) {
             Timber.d("onError");
+            displayMessage(e.getMessage());
+            progressBar.setVisibility(View.GONE);
         }
 
         @Override
         public void onComplete() {
             Timber.d("onComplete");
+            progressBar.setVisibility(View.GONE);
         }
     };
+
 }

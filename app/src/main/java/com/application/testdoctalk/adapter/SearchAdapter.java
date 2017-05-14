@@ -45,8 +45,14 @@ public class SearchAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         SearchViewHolder viewHolder = (SearchViewHolder) holder;
-        String title = mList.get(position).title;
-        viewHolder.tvName.setText(title);
+        String title = mList.get(holder.getAdapterPosition()).title;
+        String name = mList.get(holder.getAdapterPosition()).user.login;
+        String state = mList.get(holder.getAdapterPosition()).state;
+
+        viewHolder.tvTitle.setText(title);
+        viewHolder.tvName.setText(name);
+        viewHolder.tvState.setText(state);
+
 
         if (position == mList.size() - 4 && mList.size()>18) {
             mListener.getNextItem();
@@ -58,10 +64,19 @@ public class SearchAdapter extends RecyclerView.Adapter {
         return mList.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        return position;
+    }
+
     public class SearchViewHolder extends RecyclerView.ViewHolder{
 
         @BindView(R.id.tv_name)
         TextView tvName;
+        @BindView(R.id.tv_title)
+        TextView tvTitle;
+        @BindView(R.id.tv_state)
+        TextView tvState;
         public SearchViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
